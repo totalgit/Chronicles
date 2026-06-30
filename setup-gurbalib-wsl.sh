@@ -40,6 +40,27 @@ chmod +x bin/startmud
 # mud.dgd requires an absolute path
 sed -i "s|directory[[:space:]]*=[[:space:]]*\".*\";|directory\t= \"$INSTALL_DIR/lib/\";|" mud.dgd
 
+echo "==> Verifying install..."
+missing=0
+for dir in tmp bin lib/logs lib/data/players; do
+  if [ ! -d "$INSTALL_DIR/$dir" ]; then
+    echo "ERROR: missing directory: $INSTALL_DIR/$dir"
+    missing=1
+  fi
+done
+if [ ! -x "$INSTALL_DIR/bin/dgd" ]; then
+  echo "ERROR: DGD binary missing or not executable: $INSTALL_DIR/bin/dgd"
+  missing=1
+fi
+if ! grep -q "directory[[:space:]]*=[[:space:]]*\"$INSTALL_DIR/lib/\";" "$INSTALL_DIR/mud.dgd"; then
+  echo "ERROR: mud.dgd directory path is not set to $INSTALL_DIR/lib/"
+  missing=1
+fi
+if [ "$missing" -ne 0 ]; then
+  echo "Setup verification failed."
+  exit 1
+fi
+
 echo ""
 echo "Setup complete!"
 echo ""
