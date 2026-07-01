@@ -1,0 +1,79 @@
+---
+description: Gurbalib LPC code style and formatting rules
+globs: "**/*.c"
+alwaysApply: false
+---
+
+# Gurbalib LPC code style
+
+Follow the official style guide at `lib/doc/help/wiz/style`. Match surrounding files in the mudlib.
+
+## Formatting
+
+- **Indent**: 3 spaces per level (not tabs, not 4 spaces)
+- **Line length**: 80 characters max; break at logical points and indent continuation 3 spaces
+- **Blank lines**: one blank line between function definitions
+- **Spacing**: space after keywords and around operators — `if (foo)` not `if(foo)`; `a, b` not `a,b`
+
+## Braces and parentheses
+
+Braces are **required** even for single-statement blocks:
+
+```lpc
+/* Wrong */
+if (1) do_stuff();
+
+/* Correct */
+if (1) {
+   do_stuff();
+}
+```
+
+Parentheses are required where LPC allows omission — always parenthesize conditions and casts explicitly.
+
+## Function declarations
+
+Always declare return types and parameter types, even when the driver does not require it:
+
+```lpc
+int query_foo(void) {
+   return foo;
+}
+
+void setup(void) {
+   ...
+}
+```
+
+Use `varargs` for optional trailing parameters. Mark visibility: `private`, `static`, `nomask` where appropriate.
+
+## Comments
+
+- Do not add comments that merely restate the code
+- Use `/* */` for block comments; keep them brief and purposeful
+- Document non-obvious business logic, not obvious getters/setters
+
+## LPC-specific syntax
+
+- Mappings: `([ "key" : value ])`
+- Arrays: `({ item1, item2 })`
+- String concatenation across lines: use `+` at end of line with quoted continuation
+- Type checks: `typeof(x) == T_STRING`, `T_OBJECT`, etc. — include `<type.h>` when needed
+
+## Formatting tool
+
+Run `scripts/indent_it file.c` (uses gnu indent with gurbalib options) but **review output manually** — it mishandles `..`, `<-`, `({ })`, `([ ])`, and `rlimits(a; b)`.
+
+## Naming
+
+- Files: lowercase with underscores — `town_square.c`, `m_wander.c`
+- Query/set pairs: `query_*` / `set_*` for properties
+- Predicates: `is_*` returning int (0/1) — e.g. `is_room()`, `is_living()`
+- Setup hook: `void setup(void)` for object initialization after clone
+- Module files: prefix `m_` — `m_actions.c`, `m_wieldable.c`
+
+## What not to do
+
+- Do not use MudOS/FluffOS efuns that DGD does not provide — verify with `man kfun/<name>`
+- Do not change indentation style in files you are not otherwise editing
+- Do not add C++-style `//` comments unless the file already uses them consistently
