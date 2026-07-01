@@ -1,0 +1,73 @@
+---
+description: Rules for Gurbalib wizard, admin, and player commands
+globs: "lib/**/cmds/**/*.c"
+alwaysApply: false
+---
+
+# Gurbalib commands
+
+## Command structure
+
+All wizard/admin commands inherit `M_COMMAND`:
+
+```lpc
+inherit M_COMMAND;
+
+string *usage(void) {
+   string *lines;
+
+   lines = ({ "Usage: mycmd [-h] ARG" });
+   lines += ({ " " });
+   lines += ({ "Description of what this command does." });
+   lines += ({ " " });
+   lines += ({ "Options:" });
+   lines += ({ "\t-h\tHelp, this usage message." });
+   lines += get_alsos();
+   return lines;
+}
+
+void setup_alsos() {
+   add_also("wiz", "update");
+   add_also("wiz", "clone");
+}
+
+static void main(string arg) {
+   /* command implementation */
+}
+```
+
+## Required pieces
+
+- `usage()` — returns array of help lines; always include `-h` option
+- `setup_alsos()` — cross-references to related commands via `add_also(type, cmd)`
+- `main(string arg)` — entry point (called by `M_COMMAND` framework as `static void main`)
+- Also types: `"player"`, `"wiz"`, `"admin"`
+
+## Path handling
+
+Use `this_player()->query_env("cwd")` and `normalize_path()` for relative file paths. Append `.c` when missing:
+
+```lpc
+if ((str[strlen(str) - 2] == '.') && (str[strlen(str) - 1] == 'c')) {
+   /* already has .c */
+} else {
+   str = str + ".c";
+}
+path = normalize_path(str, this_player()->query_env("cwd"));
+```
+
+## After adding a new command
+
+1. Place the file in the correct `cmds/` subdirectory (`wiz/`, `admin/`, or player cmds)
+2. In-game: **`rehash`** (admin) to register the command
+3. Test with the command name and `-h` for usage
+
+## Player commands
+
+Player commands follow the same `M_COMMAND` pattern but live under `lib/cmds/` or `lib/sys/cmds/` depending on scope. Check neighboring commands in the same directory for registration patterns.
+
+## Do not
+
+- Bypass `M_COMMAND` with ad-hoc `add_action()` unless extending an object's local commands
+- Use `eval` patterns in production command code
+- Forget to handle the empty-arg and `-h` cases in `main()`

@@ -1,0 +1,84 @@
+---
+description: Rules for creating and editing Gurbalib rooms, monsters, objects, and domains
+globs: "lib/domains/**/*.c,lib/std/**/*.c"
+alwaysApply: false
+---
+
+# Gurbalib game content
+
+New game content belongs in `lib/domains/<area>/` unless you are modifying a base class in `lib/std/`.
+
+## Domain layout
+
+```
+lib/domains/<area>/
+  rooms/       # Room .c files
+  monsters/    # NPC .c files
+  objects/     # Items, weapons, armor, furniture
+  weapons/     # Optional area-specific weapons
+  armors/      # Optional area-specific armor
+```
+
+Register the area with `add_area("areaname")` in each room's `setup()`.
+
+## Rooms
+
+```lpc
+inherit "/std/room";
+
+void setup(void) {
+   add_area("myarea");
+   set_short("Short description");
+   set_long("Long description, can span " +
+      "multiple quoted strings.");
+   set_exits(([
+      "north" : "/domains/myarea/rooms/north_room.c",
+      "south" : "/domains/other/rooms/entry.c",
+   ]));
+}
+```
+
+- Exit values are **absolute paths** to `.c` files
+- Optional: `set_dark_msg()`, `set_light()`, `set_weather()`, `set_pk()`, `add_item()`, `set_commands()`
+- See `lib/doc/help/wiz/room_code` and `lib/domains/required/rooms/start.c`
+
+## Monsters
+
+```lpc
+inherit "/std/monster";
+
+void setup(void) {
+   set_name("goblin");
+   add_adj("nasty");
+   set_short("A nasty goblin");
+   set_long("It glares at you.");
+   set_gender("male");       /* male, female, unknown — or omit for random */
+   set_race("goblin");       /* looks in /domains/required/objects/races */
+   set_level(5);
+   set_hit_skill("combat/unarmed");
+   set_skill("combat/unarmed", 50);
+   set_skill("combat/defense", 100);
+}
+```
+
+- Equipment: `set_wearing("/path/to/armor.c")`, `set_wielding("/path/to/weapon.c")`
+- Behavior modules: inherit or use `m_wander`, `m_actions`, `m_aggressive` patterns from `lib/std/modules/`
+- See `lib/doc/help/wiz/monster_code` and examples in `lib/domains/2.4.5/monsters/`
+
+## Objects (items, weapons, armor)
+
+- Items: inherit `/std/object` or a specialized base (`/std/weapon`, `/std/armor`, `/std/container`)
+- Always implement `setup()` to set `set_id()`, `set_short()`, `set_long()`, and relevant properties
+- Use modules for behavior: `m_wieldable`, `m_wearable`, `m_readable`, `m_openable`, etc.
+- See `lib/doc/help/wiz/object_code`
+
+## Races
+
+Race definitions live in `/domains/required/objects/races/`. `set_race("name")` loads the matching race file.
+
+## Content guidelines
+
+- Keep descriptions in plain in-character prose; use `%^COLOR%^` codes sparingly for ANSI color
+- Use existing areas and objects as templates before inventing new patterns
+- Do not hardcode player names or wizard-specific logic in domain objects
+- Test by cloning with wizard `clone /domains/...` and placing with `update` + `goto`

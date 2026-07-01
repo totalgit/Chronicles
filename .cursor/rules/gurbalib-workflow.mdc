@@ -1,0 +1,61 @@
+---
+description: Gurbalib development workflow — testing, updating, debugging, and safe editing practices
+alwaysApply: false
+---
+
+# Gurbalib development workflow
+
+## Setup (first time)
+
+1. `perl scripts/create_data_dirs`
+2. Build and install DGD from https://github.com/dworkin/dgd
+3. `cp mud.dgd.examp mud.dgd` and edit paths
+4. `cp lib/kernel/include/local_config.h.default lib/kernel/include/local_config.h`
+5. `./bin/startmud` (after copying/configuring `scripts/startmud`)
+
+See `doc/INSTALLING` and `doc/FAQ.md`.
+
+## Edit-test cycle (running mud)
+
+1. Edit the `.c` file
+2. In-game as wizard: **`update /path/to/file.c`**
+3. For commands: **`rehash`** after adding new command files
+4. Use **`check <file>`** to validate syntax and inheritance
+5. Use **`clone <file>`** to test objects; **`dest <object>`** to clean up
+
+## Debugging
+
+| Problem | Check |
+|---------|-------|
+| Mud exits silently | `lib/logs/gurba-driver.log` |
+| Syntax/compile error on boot | Error message names file and line; fix and restart |
+| `local_config.h` missing | Copy from `.default`, set `IMUD_NAME` and mud name macros |
+| New command not found | Run `rehash` as admin |
+| First login not admin | `scripts/clean_mud` and restart (first player gets admin) |
+
+## Safe editing boundaries
+
+| Safe to edit freely | Edit with care | Avoid unless necessary |
+|---------------------|----------------|------------------------|
+| `lib/domains/` | `lib/std/modules/` | `lib/kernel/` |
+| Area-specific content | `lib/std/` base classes | `lib/sys/daemons/` |
+| New commands in `lib/cmds/` | `lib/sys/cmds/` | Driver source |
+
+## Scripts
+
+- `scripts/indent_it` — format LPC (review output)
+- `scripts/check_doc` — validate man page format for commands
+- `scripts/clean_mud` — wipe player data for fresh start
+- `scripts/backup_lib` — backup before large changes
+
+## Upgrade path
+
+When pulling mudlib updates, read `doc/UPGRADING` before merging.
+
+## AI editing guidelines
+
+- Read the nearest existing file of the same type before writing new code
+- Prefer minimal diffs — do not refactor unrelated code in the same file
+- Do not remove or rewrite shipped example domains unless asked
+- Verify new exit paths and clone paths point to files that exist or are created in the same change
+- After structural changes (new modules, daemons), mention that a **full mud restart** may be required, not just `update`

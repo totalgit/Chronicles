@@ -1,0 +1,60 @@
+---
+description: Gurbalib mudlib project context — DGD/LPC MUD architecture and directory layout
+alwaysApply: true
+---
+
+# Gurbalib project context
+
+This project is based on **Gurbalib**, a lightweight LPC mudlib for the **DGD** (Dworkin's Game Driver). Code is written in **LPC** (`.c` files), not C despite the extension.
+
+## Stack
+
+- **Driver**: DGD — compile from https://github.com/dworkin/dgd
+- **Mudlib**: Gurbalib — https://github.com/sirdude/gurbalib
+- **Docs**: `doc/`, `lib/doc/` (use in-game `man` for afun/safun/kfun/kernel/modules)
+
+## Directory layout (`lib/`)
+
+| Path | Purpose |
+|------|---------|
+| `lib/std/` | Base game classes: room, monster, weapon, armor, container, body, modules |
+| `lib/sys/` | System layer: daemons, safuns, command framework, telnet, FTP, Intermud |
+| `lib/kernel/` | Driver interface: afuns, driver config (`local_config.h`) |
+| `lib/domains/` | Game content — rooms, monsters, objects, areas (primary place for new content) |
+| `lib/cmds/` | Player-facing commands |
+| `lib/sys/cmds/` | Wizard and admin commands |
+| `lib/daemons/` | Long-lived service objects |
+| `lib/data/` | Runtime data (messages, player saves, etc.) |
+| `lib/logs/` | Driver and mud logs — check `lib/logs/gurba-driver.log` on startup failures |
+
+## Inheritance hierarchy
+
+- Game objects inherit from `/std/*` base classes (e.g. `inherit "/std/room"`)
+- Commands inherit `M_COMMAND` (defined in `/sys/lib/modules/m_command.c`)
+- Modules use `inherit "/std/modules/m_*"` or `inherit "/sys/lib/modules/m_*"` for composable behavior
+- Use **absolute paths** in inherit statements: `inherit "/std/monster"` not relative paths
+
+## Function resolution order
+
+When a function exists at multiple layers: **safun > afun > kfun**. Prefer existing safuns/afuns over reimplementing.
+
+## Configuration
+
+- `mud.dgd` — driver config (copy from `mud.dgd.examp`)
+- `lib/kernel/include/local_config.h` — mud-specific defines (copy from `local_config.h.default`)
+- `lib/std/include/local_config.h` — optional std-layer overrides (e.g. `DISABLE_FTP`)
+
+## Key conventions
+
+- Objects are **cloned**, not instantiated — use `clone_object()` and call `setup()` on the clone
+- Paths use forward slashes from lib root: `/domains/myarea/rooms/town_square.c`
+- After adding or changing commands, admins must run **`rehash`**
+- After editing LPC files in a running mud, use wizard **`update <file>`** to reload
+- Do not edit `lib/kernel/` or `lib/sys/` casually — prefer extending via `lib/domains/` and `lib/std/modules/`
+
+## Reference examples
+
+- Minimal room: `lib/domains/required/rooms/start.c`
+- Minimal monster: `lib/domains/required/monsters/rat.c`
+- Wizard command: `lib/sys/cmds/wiz/clone.c`
+- Style guide: `lib/doc/help/wiz/style`
